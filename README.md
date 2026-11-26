@@ -6,8 +6,9 @@ A native 64-bit port of **Le Fétiche Maya** (Silmarils, 1989), made by statical
 program to C. It is not an emulator with the game inside: the game's 68000 code is translated ahead of time and
 runs as native code on a small model of the Amiga hardware it needs.
 
-- **Windows x64**: released, [v1.0.0](https://github.com/Buyukcaglar/silmarils-maya/releases/latest).
-- **macOS (universal)**: in progress, see [docs/MACOS-PORT.md](docs/MACOS-PORT.md).
+- **Windows x64**: [v1.0.0](https://github.com/Buyukcaglar/silmarils-maya/releases/tag/v1.0.0).
+- **macOS (universal: Apple silicon and Intel)**: [v1.0.0](https://github.com/Buyukcaglar/silmarils-maya/releases/tag/v1.0.0),
+  signed and notarized by Apple.
 
 **The game is not included.** You need your own copy of the original Amiga game's files.
 
@@ -60,7 +61,28 @@ game's own folder is never written to.
 
 Command line: `--data <folder>`, `--crt 0|1`, `--aspect 4:3|square`.
 
+## Playing (macOS)
+
+1. Download `maya64-1.0.0-macos.dmg` from the [releases](https://github.com/Buyukcaglar/silmarils-maya/releases),
+   open it and drag **Le Fetiche Maya 64bit** to Applications. (`maya64-1.0.0-macos.zip` holds the same
+   application.)
+2. Have the Amiga game's data folder ready, as for Windows (`Maya/data` in the WHDLoad package).
+3. Open the application. The first time, it asks for that folder and remembers it. A folder next to the application
+   also works, as does `open "/Applications/Le Fetiche Maya 64bit.app" --args --data <folder>`. If the folder is in
+   Documents, Desktop, Downloads or on an external drive, macOS asks once whether the game may read it.
+
+macOS 11 Big Sur or later; one application for Apple silicon and Intel Macs.
+
+The controls are those of the table above, with these differences: **Control** (either one) is fire, F1 to F10 may
+need the **fn** key on a Mac keyboard, full screen is **Control+Command+F** (or the window's green button), and the
+Command key always stays the Mac's (Command+Q quits). The options are in the **View** menu: Enter Full Screen,
+Integer Scaling or Fit to Window, 4:3 Monitor Aspect and CRT Scanlines; About is in the application menu. Settings
+and saved games are kept in `~/Library/Application Support/Le Fetiche Maya 64bit/`; the game's folder is never
+written.
+
 ## Building from source
+
+### Windows
 
 You need Visual Studio 2022 or later (C++ tools), CMake, Ninja, Python 3.8 or later, and optionally LLVM (clang-cl is
 used when present). You also need the Amiga game's `T.X`, the program that gets recompiled; it sits in the same
@@ -77,6 +99,18 @@ checks `T.X` against the version it was written for (the WHDLoad v1.4 package's 
 The application icon is built from `res/maya64-icon.png` with `python tools/make_icon.py` (needs Pillow); the
 generated `res/maya64.ico` is in the repository, so a normal build does not need this step.
 
+### macOS
+
+You need the Xcode command line tools, CMake and Python 3 (Ninja is used when present), and the game's `T.X`.
+
+```
+./build.sh ~/Games/Maya/data
+```
+
+This builds the universal `build/mac/Le Fetiche Maya 64bit.app` (signed ad hoc) and `build/mac/maya_cli`.
+`tools/package_mac.sh` makes the signed, notarized release zip and disk image; see
+[docs/MACOS-PORT.md](docs/MACOS-PORT.md).
+
 ## How it works
 
 | Path | Contents |
@@ -85,8 +119,9 @@ generated `res/maya64.ico` is in the repository, so a normal build does not need
 | `runtime/` | The Amiga the game needs: CPU state and dispatcher, custom chips (copper, bitplanes, blitter, Paula sound), CIAs, and the ~40 AmigaOS calls the game makes |
 | `present/` | Scaling, 4:3 aspect and the CRT scanlines filter (portable C) |
 | `host/win32/` | The Windows application: window, menu, theme, About box, input, sound output |
+| `host/macos/` | The macOS application (Cocoa): window, menus, About box, input, game controllers, AudioQueue sound |
 | `tests/` | `maya_cli`, the headless runner |
-| `docs/` | Design and status: [RECOMP-PLAN.md](docs/RECOMP-PLAN.md), [HOST-DESIGN.md](docs/HOST-DESIGN.md), [DECISIONS.md](docs/DECISIONS.md), [RELEASE-NOTES.md](docs/RELEASE-NOTES.md) |
+| `docs/` | Design and status: [RECOMP-PLAN.md](docs/RECOMP-PLAN.md), [HOST-DESIGN.md](docs/HOST-DESIGN.md), [DECISIONS.md](docs/DECISIONS.md), [MACOS-PORT.md](docs/MACOS-PORT.md), [RELEASE-NOTES.md](docs/RELEASE-NOTES.md) |
 
 The game's program, `T.X`, is an interpreter for Silmarils' ALIS script language. The recompiler translates it to
 C functions that keep the 68000's registers and stack exactly, with cycle counts so that interrupts, the display
@@ -98,7 +133,8 @@ files at run time, unchanged.
 - In: the port's own code, documentation, and a few screenshots.
 - Not in: any file of the game, and no C generated from it. The released `maya64.exe` necessarily contains the
   translated interpreter, as any static recompilation's binary does; it contains none of the game's scripts,
-  pictures, sounds or music, and does nothing without the original game's files.
+  pictures, sounds or music, and does nothing without the original game's files. The same holds for the macOS
+  application.
 
 ## Credits and licence
 

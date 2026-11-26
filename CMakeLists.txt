@@ -7,8 +7,14 @@
 #   cmake -G Ninja -B build/win -DCMAKE_BUILD_TYPE=Release -DMAYA_DATA=D:/Games/Maya/data
 #   cmake --build build/win
 #
-# Outputs: maya64.exe (the Windows host) and maya_cli.exe (the headless test runner).
+# Outputs: maya64.exe (the Windows host) and maya_cli.exe (the headless test runner); on macOS
+# "Le Fetiche Maya 64bit.app" (universal: arm64 + x86_64) and maya_cli (build.sh, docs/MACOS-PORT.md).
 cmake_minimum_required(VERSION 3.20)
+if(APPLE)
+    # one universal program for Apple silicon and Intel Macs (set before project() so they apply)
+    set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64" CACHE STRING "the architectures of the macOS build")
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "11.0" CACHE STRING "the oldest macOS the build runs on")
+endif()
 project(Maya C)
 if(WIN32)
     enable_language(RC)
@@ -68,4 +74,60 @@ if(WIN32)
         # the manifest comes from the .rc
         target_link_options(maya64 PRIVATE /MANIFEST:NO)
     endif()
+elseif(APPLE)
+    enable_language(OBJC)
+    set(MAYA_VERSION "1.0.0")      # also HOST_VERSION_STR in host/macos/host_config.h
+
+    # the app icon: res/macos/maya64-icon-macos.png (tools/make_mac_icon.m) at every size an .icns holds
+    set(MAYA_ICONSET "${CMAKE_BINARY_DIR}/maya64.iconset")
+    set(MAYA_ICNS "${CMAKE_BINARY_DIR}/maya64.icns")
+    set(MAYA_ICON_PNG "${CMAKE_SOURCE_DIR}/res/macos/maya64-icon-macos.png")
+    set(_icon_cmds)
+    foreach(sz 16 32 128 256 512)
+        math(EXPR sz2 "${sz} * 2")
+        list(APPEND _icon_cmds
+            COMMAND sips -z ${sz} ${sz} "${MAYA_ICON_PNG}" --out "${MAYA_ICONSET}/icon_${sz}x${sz}.png"
+            COMMAND sips -z ${sz2} ${sz2} "${MAYA_ICON_PNG}" --out "${MAYA_ICONSET}/icon_${sz}x${sz}@2x.png")
+    endforeach()
+    add_custom_command(OUTPUT "${MAYA_ICNS}"
+        COMMAND "${CMAKE_COMMAND}" -E rm -rf "${MAYA_ICONSET}"
+        COMMAND "${CMAKE_COMMAND}" -E make_directory "${MAYA_ICONSET}"
+        ${_icon_cmds}
+        COMMAND iconutil -c icns "${MAYA_ICONSET}" -o "${MAYA_ICNS}"
+        DEPENDS "${MAYA_ICON_PNG}"
+        COMMENT "Making the app icon"
+        VERBATIM)
+    set_source_files_properties("${MAYA_ICNS}" PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+
+    add_executable(maya64 MACOSX_BUNDLE host/macos/maya_macos.m "${MAYA_ICNS}")
+    set_target_properties(maya64 PROPERTIES
+        OUTPUT_NAME "Le Fetiche Maya 64bit"
+        MACOSX_BUNDLE_INFO_PLIST "${CMAKE_SOURCE_DIR}/host/macos/Info.plist.in"
+        MACOSX_BUNDLE_GUI_IDENTIFIER com.buyukcaglar.maya64
+        MACOSX_BUNDLE_BUNDLE_VERSION ${MAYA_VERSION}
+        MACOSX_BUNDLE_SHORT_VERSION_STRING ${MAYA_VERSION}
+        MACOSX_BUNDLE_ICON_FILE maya64.icns)
+    set_source_files_properties(host/macos/maya_macos.m PROPERTIES
+        COMPILE_OPTIONS "-fobjc-arc"
+        OBJECT_DEPENDS "${CMAKE_SOURCE_DIR}/host/macos/host_config.h")
+    target_link_libraries(maya64 PRIVATE maya_runtime maya_present
+        "-framework Cocoa" "-framework QuartzCore" "-framework AudioToolbox" "-framework GameController")
+    # development checks of the app (scripted input inside its own process, snapshots): never in a release
+    option(MAYA_DEVTEST "build the app's development checks (host/macos/maya_devtest.inc)" OFF)
+    if(MAYA_DEVTEST)
+        target_compile_definitions(maya64 PRIVATE MAYA_DEVTEST)
+    endif()
+
+    # the signature: ad hoc by default; with a Developer ID (-DMAYA_CODESIGN_IDENTITY="Developer ID Application: ...")
+    # the hardened runtime and a secure timestamp, as notarization requires (tools/package_mac.sh)
+    set(MAYA_CODESIGN_IDENTITY "-" CACHE STRING "codesign identity for the app (- signs ad hoc)")
+    if(MAYA_CODESIGN_IDENTITY STREQUAL "-")
+        set(_sign_opts --timestamp=none)
+    else()
+        set(_sign_opts --options runtime --timestamp)
+    endif()
+    add_custom_command(TARGET maya64 POST_BUILD
+        COMMAND codesign --force --sign "${MAYA_CODESIGN_IDENTITY}" ${_sign_opts} "$<TARGET_BUNDLE_DIR:maya64>"
+        COMMENT "Signing the app (${MAYA_CODESIGN_IDENTITY})"
+        VERBATIM)
 endif()

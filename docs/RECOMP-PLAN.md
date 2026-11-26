@@ -14,15 +14,16 @@
 | 4 | CODE | $048ed8 | $b88 | sound and music player (Paula + CIA-B timer, level-4 interrupt) |
 | 5 | CODE | $049a68 | $1298 | ALIS graphics routines (blitter) |
 
-## Status (2026-11-26): Windows build complete
+## Status (2026-11-26): Windows and macOS builds complete
 
 The game runs from boot to play on Windows x64: the Silmarils logo, the intro, the "HIT THE ? KEY / L KEY"
 prompt, the game's scenes, walking with the joystick, the F-key icons, music and sound effects, saving (F10) and
 loading (L at the prompt). Clang (clang-cl) and MSVC (cl) builds produce identical frames. The emulated machine runs
 about 70 times faster than real time.
 
-Not built yet: the macOS host (decision D20 in DECISIONS.md). The hand-over for that work is
-[MACOS-PORT.md](MACOS-PORT.md). Released: v1.0.0 for Windows ([RELEASE-NOTES.md](RELEASE-NOTES.md)).
+The macOS host is built too (D24 to D30 in DECISIONS.md, [MACOS-PORT.md](MACOS-PORT.md)): one universal app
+(arm64 + x86_64) whose frames are byte-identical to `maya_cli`'s on both architectures. Released: v1.0.0 for Windows
+and for macOS (signed and notarized) ([RELEASE-NOTES.md](RELEASE-NOTES.md)).
 
 ### Repository layout
 
@@ -32,7 +33,8 @@ Not built yet: the macOS host (decision D20 in DECISIONS.md). The hand-over for 
 | `runtime/` | `machine.c` (CPU state, dispatcher, exceptions, the `maya_*` host API, UTF-8 file wrappers), `custom.c` (Agnus/Denise: copper, bitplanes, beam, interrupts), `blitter.c`, `paula.c`, `cia.c`, `hle.c` (exec, dos, graphics, intuition, keyboard.device), `hooks.c` |
 | `present/` | `layout.c` (integer/fit, square/4:3), `crt.c` (CRT scanlines, from Civ64) |
 | `host/win32/` | `maya_win32.c` (window, menu, theme, About, input, waveOut), `maya64.rc`, manifest, `host_config.h` |
-| `res/` | the application icon: the artwork `maya64-icon.png`, and `maya64.ico` and `maya64-icon-1024.png` made from it by `tools/make_icon.py` |
+| `host/macos/` | `maya_macos.m` (Cocoa window, menus, About, input, GameController, AudioQueue), `Info.plist.in`, `host_config.h`, `maya_devtest.inc` (development checks, D30) |
+| `res/` | the application icon: the artwork `maya64-icon.png`, and `maya64.ico` and `maya64-icon-1024.png` made from it by `tools/make_icon.py`; `macos/maya64-icon-macos.png` (`tools/make_mac_icon.m`, D28) and `macos/README.txt` (the Mac release's read-me) |
 | `tests/maya_cli.c` | headless runner: scripted keys, joystick and clicks; BMP screenshots; WAV output |
 
 ### Build
@@ -44,6 +46,9 @@ build.cmd [the Amiga game's folder]      (default: _extracted\amiga\Maya\data)
 This runs CMake and Ninja with clang-cl, or with cl when LLVM is missing. CMake runs `gen_c.py` on the folder's
 `T.X` and builds `build\win\maya64.exe` and `build\win\maya_cli.exe`. The generator warns when T.X's SHA-1 differs from
 `patches_maya.T_X_SHA1`; every patch checks its original bytes and refuses a mismatch.
+
+On macOS, `./build.sh [folder]` does the same into `build/mac` (the universal app and `maya_cli`), and
+`tools/package_mac.sh` makes the signed and notarized release ([MACOS-PORT.md](MACOS-PORT.md)).
 
 ### Testing and debugging
 

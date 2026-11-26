@@ -1,72 +1,99 @@
-# macOS port: what is left to do
+# macOS port: as built
 
-The Windows build is complete (v1.0.0). The macOS universal build (arm64 + x86_64) has not been started, because
-it could not be compiled or tested on the Windows machine (decision D20). This page is the hand-over for the Mac.
+The macOS host was written and released on 2026-11-26 (decisions D24 to D30 in [DECISIONS.md](DECISIONS.md)). It is
+one universal application, `Le Fetiche Maya 64bit.app` (arm64 + x86_64, macOS 11 Big Sur or later), signed with a
+Developer ID and notarized. The game code (`runtime/`, `present/`, the code generated from `T.X`) is the same as
+in the Windows build; only the host is new.
 
-## Getting the sources and the game on the Mac
+## Building
 
-Work from the private repository, which holds the game's files as well:
-
-```
-git clone https://github.com/Buyukcaglar/silmarils-maya-dev.git
-cd silmarils-maya-dev
-```
-
-- The Amiga game is in `_extracted/amiga/Maya/data` (and the original archives in `_references/`). `CMakeLists.txt`
-  uses that folder by default (`MAYA_DATA`).
-- The ALIS reference interpreter is not in the repository. Only when a format question comes up:
-  `git clone https://github.com/maestun/alis _research/alis-ref` (the notes refer to commit `31b1811`).
-- Repository layout and the rule about what goes where: decision D22 in [DECISIONS.md](DECISIONS.md). Branch `dev`
-  here is the public `main` plus the game files; port code that should become public is cherry-picked or merged to
-  `main` **without** the game-file commits.
-
-## What already works on any platform
-
-`runtime/`, `present/`, `tools/` and `tests/maya_cli.c` are portable C and Python. `CMakeLists.txt` already builds
-`maya_runtime`, `maya_present` and `maya_cli` on non-Windows compilers (the `WIN32` block only adds the host).
-`runtime/machine.c` has POSIX paths for its file wrappers (`rt_fopen` and friends).
-
-First check on the Mac, before writing any host code:
+You need the Xcode command line tools, CMake and Python 3 (Ninja is used when present), and the Amiga game's `T.X`.
 
 ```
-cmake -G Ninja -B build/mac -DCMAKE_BUILD_TYPE=Release
-cmake --build build/mac --target maya_cli
-build/mac/maya_cli _extracted/amiga/Maya/data 2400 shot.bmp sound.wav \
-    --key 1000 0x40 --key 1600 0x3a --joy 2000 8 100
+./build.sh [the Amiga game's folder]       (default: _extracted/amiga/Maya/data)
 ```
 
-`shot.bmp` should show the first scene (the village, with the jeep), and `sound.wav` the logo's music. This has
-**not** been run on macOS or on arm64 yet, so expect small portability fixes (the Windows builds with clang-cl and
-cl produce identical frames, so clang itself is known good).
+This builds `build/mac/Le Fetiche Maya 64bit.app` (signed ad hoc) and `build/mac/maya_cli`. Extra arguments go to
+CMake, for example `-DMAYA_CODESIGN_IDENTITY="Developer ID Application: <name> (<team>)"` for a Developer ID
+signature with the hardened runtime, or `-DMAYA_DEVTEST=ON` for the development checks below.
 
-## What to write: `host/macos/`
+The release (signed, notarized, stapled; a zip and a disk image) is made by:
 
-A Cocoa host that does what `host/win32/maya_win32.c` does, following the user's Civ64 port
-(`platform/macos/host_macos.m` there). The design is in [HOST-DESIGN.md](HOST-DESIGN.md). The whole game API is
-`runtime/maya.h`; the picture pipeline is `present/present.h`.
+```
+tools/package_mac.sh [the Amiga game's folder]
+```
 
-| Windows host | macOS equivalent |
+It uses the identity "Developer ID Application: Onur Buyukcaglar (SZ4F4WP934)" and the notarytool keychain profile
+`civ64-notary` unless `MAYA_SIGN_ID` and `MAYA_NOTARY` say otherwise; `MAYA_NOTARIZE=0` signs without notarizing.
+The outputs go to `build/release/`.
+
+## What the host does
+
+`host/macos/maya_macos.m` is the counterpart of `host/win32/maya_win32.c`:
+
+| Windows host | macOS host |
 |---|---|
-| Window, frame from `maya_picture()` through `present_layout` / `present_scale` / `present_crt_apply` | `NSWindow` with a layer-backed `NSView` (or `CALayer` contents from the XRGB buffer) |
-| Game clock: one `maya_run_frame()` whenever waveOut needs more sound (about 60 ms queued) | AudioQueue or `AVAudioEngine` pulling `maya_audio()` (48 kHz stereo int16); PAL frame clock `MAYA_FRAME_HZ_NUM / MAYA_FRAME_HZ_DEN` when there is no device |
-| System menu: Full screen, Integer scaling / Fit to window, 4:3 monitor aspect, CRT scanlines, About, Close | `NSMenu`: application menu (About, Quit) and a View menu with the same items; Cmd+F or Ctrl+Cmd+F for full screen |
-| Theme: dark title bar, menus, dialogs | Nothing to do: AppKit follows the system appearance |
-| About box (icon, author line, link, licence text) | A small `NSPanel` or `NSAlert` with an `NSTextView`; the texts are in `maya_win32.c` (`g_license`) and `host_config.h`. Consider moving the shared strings to a common header |
-| Keys by position, letters and `?` by character (D17); arrows and keypad as joystick, Ctrl as fire (D15) | `keyDown:` with `keyCode` → Amiga raw key table; `charactersIgnoringModifiers` for letters and `?` |
-| XInput controller | `GCController` (GameController framework) |
-| Mouse as the Amiga mouse in port 1 (D16) | `mouseMoved:` mapped through the layout to game pixels, `maya_mouse()` |
-| `maya64.cfg` and `saves\` next to the exe, `%APPDATA%` fallback (D7, D18) | `~/Library/Application Support/Le Fetiche Maya 64bit/` for both (an app bundle is not writable) |
-| First start asks for the game's folder (`maya_is_data_dir`) | `NSOpenPanel`, remembered in the settings |
-| `maya64.rc`: icon, version | `Info.plist` (`CFBundleShortVersionString` 1.0.0) and `maya64.icns` made from `res/maya64-icon-1024.png` with `iconutil` |
+| Window, frame through `present_layout` / `present_scale` / `present_crt_apply` | `NSWindow` with a layer-backed view. Without CRT the 320×200 frame is a `CALayer`'s contents, scaled by the GPU with nearest-neighbour sampling into the layout's rectangle; with CRT the scaled and filtered image (backing pixels) is (D25) |
+| Game clock from waveOut (about 64 ms queued), PAL clock without a device | AudioQueue pulling from a ring kept 64 ms ahead; a 4 ms timer in the common run-loop modes; PAL clock without a device (D26) |
+| System menu: Full screen, Integer scaling / Fit to window, 4:3, CRT, About | Menu bar: application menu (About, Hide, Quit) and View menu (Enter Full Screen Ctrl+Cmd+F, Integer Scaling / Fit to Window, 4:3 Monitor Aspect, CRT Scanlines) |
+| Dark title bar, menus and dialogs by hand | AppKit follows the system appearance |
+| About box: icon, author, link, licence text | An `NSPanel` with the same contents; pauses the game |
+| Keys by position, letters and `?` by character; arrows and keypad as joystick, Ctrl fire | The same with macOS key codes; Option is Amiga Alt; Command is never sent to the game (D27) |
+| XInput controller | GameController framework (D-pad or left stick, A or B fire) |
+| Mouse as the Amiga mouse in port 1 | The same; the pointer hides after 2 s without movement in full screen |
+| `maya64.cfg` and `saves\` next to the exe, `%APPDATA%` fallback | `~/Library/Application Support/Le Fetiche Maya 64bit/`; the window frame is kept by AppKit (D24) |
+| First start asks for the game's folder | `NSOpenPanel`, remembered in the settings; `--data`, a folder next to the app also work |
+| `maya64.rc`: icon, version | `host/macos/Info.plist.in` (version 1.0.0) and `maya64.icns` made from `res/macos/maya64-icon-macos.png` (D28) |
 
-Build: add an `elseif(APPLE)` block to `CMakeLists.txt` with `enable_language(OBJC)`, a `MACOSX_BUNDLE` target,
-`CMAKE_OSX_ARCHITECTURES "arm64;x86_64"` and a deployment target (Civ64's value is a good default), linking Cocoa,
-AudioToolbox, GameController and QuartzCore. Add a `build.sh` next to `build.cmd`.
+`Info.plist` carries usage descriptions for the Documents, Desktop, Downloads, removable and network volume
+prompts, because macOS asks before the game may read its files there.
 
-## Done means
+## How it was tested (2026-11-26: Apple M4, macOS 27.2.1)
 
-- `maya_cli` on the Mac gives the same frames as on Windows for the recipe above (compare the BMPs).
-- The app starts from Finder, asks for the game's folder, plays from the logo into the game with sound, saves and
-  loads, in a window and full screen, on both Apple silicon and Intel (`lipo -archs` shows both).
-- Every decision made on the way is added to [DECISIONS.md](DECISIONS.md), and the status in
-  [RECOMP-PLAN.md](RECOMP-PLAN.md) is updated.
+- `maya_cli` (universal) with the recipe below gives the same frames and sound on arm64 and on x86_64 (Rosetta 2):
+  `shot.bmp` SHA-1 `6dfbba4b…`, the logo at frame 300 `b11a62ed…`, `sound.wav` `7e1af132…`.
+
+  ```
+  build/mac/maya_cli _extracted/amiga/Maya/data 2400 shot.bmp sound.wav \
+      --key 1000 0x40 --key 1600 0x3a --joy 2000 8 100
+  ```
+
+- The app itself, with the development checks (`-DMAYA_DEVTEST=ON`, `MAYA_DEVTEST=<folder>`, D30): Space, "/" and
+  the right arrow go through the window as key events on the same frames, and the app's pictures at frames 300 and
+  2400 are byte-identical to `maya_cli`'s, on arm64 and on x86_64. It runs at 49.91 frames a second (PAL 49.92) with
+  the sound from AudioQueue; no sound buffer ran dry in normal play on Apple silicon. The View menu's commands
+  (CRT, 4:3, fit, integer), full screen in and out and the About box were exercised and their pictures checked.
+- Starting without `--data` uses the folder remembered in the settings.
+- Saving (F10, "SAVE THE GAME") writes `saves/p.dat` and loading (L at the prompt) returns to the saved scene; the
+  game's folder is not changed (checked with `maya_cli`, which uses the same runtime file code).
+- The release (`tools/package_mac.sh`): `codesign --verify --strict --deep` (hardened runtime, secure timestamp,
+  "Developer ID Application: Onur Buyukcaglar (SZ4F4WP934)"); the notary accepted the app (submission
+  `6d74844a-d2cd-4826-ba98-5690e65840d7`) and the disk image (`9362db5d-0b00-4495-97d3-f7b81aea6270`) with no
+  issues; both stapled; `spctl --assess` accepts both as "Notarized Developer ID". A copy of the zip given a
+  browser's quarantine flag and unpacked: the app is accepted and its staple validates. The signed release binary
+  runs the game with AudioQueue sound.
+- SHA-256: `maya64-1.0.0-macos.dmg` `35646fdc0ba49e8b237cd5861ff16431aee6832d795ce640525279c0394f5f04`,
+  `maya64-1.0.0-macos.zip` `d2c1356b92d05e8a35a589cbbf80a0082233575c3df34c76b8001554407b1703`.
+
+Not tested by the agent: a start from Finder on another Mac, an Intel Mac (the x86_64 slice ran under Rosetta 2
+only), a game controller, and what needs a person at the screen: the first-start `NSOpenPanel`, the system's
+folder-access prompt and the "downloaded from the Internet" confirmation of a quarantined copy.
+
+## Development checks
+
+```
+cmake -S . -B build/mac-devtest -G Ninja -DCMAKE_BUILD_TYPE=Release -DMAYA_DEVTEST=ON
+cmake --build build/mac-devtest
+MAYA_DEVTEST=/tmp/dt "build/mac-devtest/Le Fetiche Maya 64bit.app/Contents/MacOS/Le Fetiche Maya 64bit" --data <game>
+```
+
+The script is in `host/macos/maya_devtest.inc`. It writes `logo.bmp`, `village.bmp` (compare with `maya_cli`),
+window snapshots (`win-*.png`, `full*.png`, `about.png`) and `log.txt`, and keeps its settings and saves in the
+given folder. Keep the game's folder outside Documents, Desktop, Downloads and external drives for these runs, or
+the first file access waits for the system's permission prompt.
+
+## Repositories
+
+Work from the private repository, which also holds the game's files (`_extracted/amiga/Maya/data`, the default
+`MAYA_DATA`). Branch `dev` there is the public `main` plus the game-file commits; port code that becomes public goes
+to the public repository's `main` **without** those commits (D22).
