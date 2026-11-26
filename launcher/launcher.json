@@ -1,0 +1,27 @@
+{
+  "title": "Le Fétiche Maya 64bit",
+  "repo": "Buyukcaglar/silmarils-maya",
+  "accent": "#c8862a",
+  "note": {
+    "default": "Nothing is compiled: the setup downloads this project's newest Windows release from GitHub (about 1 MB) and points it at your copy. It takes under a minute and needs the data folder of the Amiga version (the one that holds MAIN.CO). Windows only."
+  },
+  "game": {
+    "name": "Le Fétiche Maya (Amiga)",
+    "files": [
+      "MAIN.CO"
+    ]
+  },
+  "setup": {
+    "windows": [
+      "powershell",
+      "-NoProfile",
+      "-ExecutionPolicy",
+      "Bypass",
+      "-File",
+      "launcher\\setup.ps1",
+      "-Game",
+      "{game}"
+    ]
+  },
+  "play": "* (recomp).cmd"
+}

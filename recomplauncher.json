@@ -1,0 +1,118 @@
+{
+  "$schema": "https://recomplauncher.com/schema/recomplauncher.json",
+  "format": 1,
+  "name": "Le Fétiche Maya 64bit",
+  "repo": "Buyukcaglar/silmarils-maya",
+  "inputs": [
+    {
+      "id": "game",
+      "label": "The data folder of the Amiga version of Le Fétiche Maya: the folder that holds MAIN.CO (Maya\\data in the WHDLoad package).",
+      "formats": [
+        {
+          "type": "folder"
+        }
+      ],
+      "check": {
+        "file": "MAIN.CO"
+      }
+    }
+  ],
+  "start": {
+    "program": [
+      "maya64.exe",
+      "Le Fetiche Maya 64bit.app"
+    ],
+    "args": [
+      "--data",
+      "{input:game}"
+    ]
+  },
+  "saves": [
+    "{install}/saves",
+    "{home}/Library/Application Support/Le Fetiche Maya 64bit/saves"
+  ],
+  "folders": {
+    "saves": [
+      {
+        "path": "{install}/saves",
+        "if": "{install}/saves"
+      },
+      {
+        "path": "{home}/Library/Application Support/Le Fetiche Maya 64bit/saves"
+      }
+    ]
+  },
+  "settings": [
+    {
+      "id": "aspect",
+      "label": "Picture shape",
+      "in": "args",
+      "help": "Square pixels, or the 4:3 shape of an Amiga monitor.",
+      "choices": [
+        {
+          "label": "Game's option",
+          "args": []
+        },
+        {
+          "label": "4:3",
+          "args": [
+            "--aspect",
+            "4:3"
+          ]
+        },
+        {
+          "label": "Square pixels",
+          "args": [
+            "--aspect",
+            "square"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "crt",
+      "label": "CRT scanlines",
+      "in": "args",
+      "help": "Draws the picture with the lines of an old monitor.",
+      "choices": [
+        {
+          "label": "Game's option",
+          "args": []
+        },
+        {
+          "label": "Off",
+          "args": [
+            "--crt",
+            "0"
+          ]
+        },
+        {
+          "label": "On",
+          "args": [
+            "--crt",
+            "1"
+          ]
+        }
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "id": "saves",
+      "label": "Saves",
+      "help": "Open the folder your saves are in.",
+      "open": "saves"
+    }
+  ],
+  "exit_codes": {
+    "1": "It couldn't start: the game's data folder wasn't found or couldn't be read. Pick your game folder again on the game's page."
+  },
+  "system": {
+    "windows": {
+      "version": "10"
+    },
+    "macos": {
+      "version": "11"
+    }
+  }
+}

@@ -10,9 +10,9 @@
 #                     xcrun notarytool store-credentials <profile> --apple-id <id> --team-id <team>
 #   MAYA_NOTARIZE=0   sign only (no notarization, no stapling): for a local check
 #
-# Outputs in build/release: maya64-<v>-macos.zip (the app, README.txt, LICENSE.txt), maya64-<v>-macos.dmg (the
-# same with a link to /Applications), their .sha256, and the notary's answers (notary-*.json).  The game is not in
-# either: the app needs the player's own copy of the Amiga game.
+# Outputs in build/release: maya64-<v>-macos.zip (the app, README.txt, LICENSE.txt, recomplauncher.json),
+# maya64-<v>-macos.dmg (the same with a link to /Applications), their .sha256, and the notary's answers
+# (notary-*.json).  The game is not in either: the app needs the player's own copy of the Amiga game.
 set -eu
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 DATA="${1:-$ROOT/_extracted/amiga/Maya/data}"
@@ -52,12 +52,13 @@ if [ "$NOTARIZE" = 1 ]; then
     spctl --assess --type execute --verbose=2 "$APP"
 fi
 
-# 3. the zip: a folder with the app, README.txt and LICENSE.txt
+# 3. the zip: a folder with the app, README.txt, LICENSE.txt and recomplauncher.json
 STAGE="$OUT/stage/$BASE"
 mkdir -p "$STAGE"
 ditto "$APP" "$STAGE/$NAME.app"
 cp "$ROOT/res/macos/README.txt" "$STAGE/README.txt"
 cp "$ROOT/LICENSE" "$STAGE/LICENSE.txt"
+cp "$ROOT/recomplauncher.json" "$STAGE/recomplauncher.json"   # read by RecompLauncher (D33): in every release archive
 (cd "$OUT/stage" && ditto -c -k --norsrc --noextattr --noacl --keepParent "$BASE" "$OUT/$BASE.zip")
 
 # 4. the disk image: the same files and a link to /Applications; signed, notarized and stapled
