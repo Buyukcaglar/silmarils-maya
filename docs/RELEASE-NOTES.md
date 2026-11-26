@@ -1,5 +1,21 @@
 # Release notes
 
+## v1.0.0 macOS files replaced (2026-11-27): the $DFF0A0 crash fix
+
+`maya64-1.0.0-macos.dmg`, `maya64-1.0.0-macos.zip` and their `.sha256` files on the v1.0.0 release were replaced
+with a rebuild from `main` at aa07e73 (`tools/package_mac.sh`), which has the crash fix of the Windows download
+below (D32). The version number is unchanged; settings and saved games are the same.
+
+- `maya64-1.0.0-macos.zip`: 3,072,545 bytes, SHA-256
+  `4e4f4ad72929e70de9d4499efb8a30b90c7cd202943dd6a759cf20cf433828a4`: the app, `README.txt`, `LICENSE.txt`,
+  `recomplauncher.json`.
+- `maya64-1.0.0-macos.dmg`: 3,978,449 bytes, SHA-256
+  `414078371a59a2b5d5cc14cedda03d1414c4dc722b12acf32279b5ddd595c18a`: the same files and a link to
+  Applications; the disk image now also carries `recomplauncher.json`.
+- Both the app and the disk image are signed with the Developer ID, notarized (app submission accepted, disk image
+  `a8a650e8-79bf-4b9d-b304-8b540cf2a305` accepted) and stapled.
+- These values replace the macOS ones in the sections below.
+
 ## v1.0.0 zips replaced (2026-11-26): `recomplauncher.json` added for launchers
 
 `maya64-1.0.0-win64.zip` and `maya64-1.0.0-macos.zip` on the v1.0.0 release were replaced in place. They hold the
