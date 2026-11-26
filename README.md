@@ -2,6 +2,8 @@
 
 # Le Fétiche Maya 64bit
 
+<a href="https://recomplauncher.com"><picture><source media="(prefers-color-scheme: dark)" srcset="https://recomplauncher.com/assets/press/launcher/badge-light.svg"><img alt="Get it on RecompLauncher" src="https://recomplauncher.com/assets/press/launcher/badge-dark.svg" height="48"></picture></a>
+
 A native 64-bit port of **Le Fétiche Maya** (Silmarils, 1989), made by statically recompiling the Amiga version's
 program to C. It is not an emulator with the game inside: the game's 68000 code is translated ahead of time and
 runs as native code on a small model of the Amiga hardware it needs.
@@ -60,6 +62,26 @@ The window follows the Windows light or dark app theme. Settings are kept in `ma
 game's own folder is never written to.
 
 Command line: `--data <folder>`, `--crt 0|1`, `--aspect 4:3|square`.
+
+## Playing through a launcher
+
+Two launchers can install and start the port. Neither of them contains or downloads the game: you still need your
+own copy of the Amiga game's files.
+
+- **[RecompLauncher](https://recomplauncher.com)**: install Le Fétiche Maya 64bit there (it takes the release from
+  this repository), pick the Amiga version's data folder once (the one that holds `MAIN.CO`) and press Play. It
+  starts `maya64.exe --data <folder>`. The picture shape (4:3 or square pixels) and the CRT scanlines are settings
+  on the game's page, and the page opens the saved games (`saves\` beside the program). On a Mac it installs the
+  `.zip`, not the disk image.
+- **[sp00nznet's recomp-launcher](https://github.com/sp00nznet/recomp-launcher)** (Windows only): from the next
+  tagged version on, the release also carries `Maya64-Installer-windows-x64.exe`. It finds or asks for the game's
+  data folder, downloads this project's newest Windows release (nothing is compiled) and shows a Play button. Until
+  then, this command does the same by hand from a copy of this repository, and leaves
+  `Le Fetiche Maya (recomp).cmd` there to start the game:
+
+  ```
+  powershell -NoProfile -ExecutionPolicy Bypass -File launcher\setup.ps1 -Game "<the game's data folder>"
+  ```
 
 ## Playing (macOS)
 

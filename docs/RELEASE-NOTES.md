@@ -1,5 +1,26 @@
 # Release notes
 
+## v1.0.0 zips replaced (2026-11-26): `recomplauncher.json` added for launchers
+
+`maya64-1.0.0-win64.zip` and `maya64-1.0.0-macos.zip` on the v1.0.0 release were replaced in place. They hold the
+same files as before, byte for byte, plus `recomplauncher.json` next to the program. The version number is
+unchanged and nothing was rebuilt.
+
+- `recomplauncher.json` is read by [RecompLauncher](https://recomplauncher.com): it names the game folder to pick
+  (the one with `MAIN.CO`), how the program is started, the settings shown (picture shape, CRT scanlines) and where
+  the saved games are. The program does not read it; without a launcher it can be ignored.
+- `maya64-1.0.0-win64.zip`: 713,273 bytes, SHA-256
+  `9d045a37772b2537e10ecec92f3a921891c6523a59bfc2769ee8163b469ac8e5` (this replaces the value in the section
+  below).
+- `maya64-1.0.0-macos.zip`: 3,068,407 bytes, SHA-256
+  `9cfd19d244cda8e824fd37d2767cc7c871fac9cbf1ee4269ac84b4fa2d856e55`.
+- `maya64-1.0.0-macos.dmg` is unchanged and carries no `recomplauncher.json`, so on a Mac the launcher uses the
+  zip.
+- The repository also gained the files for sp00nznet's recomp-launcher (`launcher/`). Its installer,
+  `Maya64-Installer-windows-x64.exe`, is attached to releases from the next tagged version on; the README says how
+  to run the same setup by hand until then.
+- Neither launcher contains or downloads the game. The macOS files still have the crash described below.
+
 ## v1.0.0 Windows download replaced (2026-11-26)
 
 `maya64-1.0.0-win64.zip` on the v1.0.0 release was replaced with a rebuilt `maya64.exe`. The version number is

@@ -25,7 +25,8 @@ tools/package_mac.sh [the Amiga game's folder]
 
 It uses the identity "Developer ID Application: Onur Buyukcaglar (SZ4F4WP934)" and the notarytool keychain profile
 `civ64-notary` unless `MAYA_SIGN_ID` and `MAYA_NOTARY` say otherwise; `MAYA_NOTARIZE=0` signs without notarizing.
-The outputs go to `build/release/`.
+The outputs go to `build/release/`. The script also puts `recomplauncher.json` next to the app in what it packs:
+every release archive carries it for RecompLauncher (D33).
 
 ## What the host does
 
@@ -73,7 +74,9 @@ prompts, because macOS asks before the game may read its files there.
   browser's quarantine flag and unpacked: the app is accepted and its staple validates. The signed release binary
   runs the game with AudioQueue sound.
 - SHA-256: `maya64-1.0.0-macos.dmg` `35646fdc0ba49e8b237cd5861ff16431aee6832d795ce640525279c0394f5f04`,
-  `maya64-1.0.0-macos.zip` `d2c1356b92d05e8a35a589cbbf80a0082233575c3df34c76b8001554407b1703`.
+  `maya64-1.0.0-macos.zip` `d2c1356b92d05e8a35a589cbbf80a0082233575c3df34c76b8001554407b1703`. (The zip on the
+  release was replaced later that day with the same files plus `recomplauncher.json`; its current SHA-256 is in
+  RELEASE-NOTES.md.)
 
 Not tested by the agent: a start from Finder on another Mac, an Intel Mac (the x86_64 slice ran under Rosetta 2
 only), a game controller, and what needs a person at the screen: the first-start `NSOpenPanel`, the system's
