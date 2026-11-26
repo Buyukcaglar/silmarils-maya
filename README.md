@@ -2,8 +2,6 @@
 
 # Le Fétiche Maya 64bit
 
-<a href="https://recomplauncher.com"><picture><source media="(prefers-color-scheme: dark)" srcset="https://recomplauncher.com/assets/press/launcher/badge-light.svg"><img alt="Get it on RecompLauncher" src="https://recomplauncher.com/assets/press/launcher/badge-dark.svg" height="48"></picture></a>
-
 A native 64-bit port of **Le Fétiche Maya** (Silmarils, 1989), made by statically recompiling the Amiga version's
 program to C. It is not an emulator with the game inside: the game's 68000 code is translated ahead of time and
 runs as native code on a small model of the Amiga hardware it needs.
@@ -166,3 +164,5 @@ J-Christophe Charter, Bruno Blanchet). The game belongs to its owners.
 The 64-bit version is by Onur BUYUKCAGLAR, with Anthropic Claude AI assistance. The port's own code is under the
 [MIT licence](LICENSE), which also lists the acknowledgements (the WHDLoad installer by Mr.Larmer and CFou!,
 DOSBox Pure Unleashed's CRT filter by Bernhard Schelling, and maestun's ALIS interpreter as a format reference).
+
+<a href="https://recomplauncher.com"><picture><source media="(prefers-color-scheme: dark)" srcset="https://recomplauncher.com/assets/press/launcher/badge-light.svg"><img alt="Get it on RecompLauncher" src="https://recomplauncher.com/assets/press/launcher/badge-dark.svg" height="48"></picture></a>
