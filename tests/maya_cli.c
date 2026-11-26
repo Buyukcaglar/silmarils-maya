@@ -99,6 +99,7 @@ int main(int argc, char **argv)
 #ifdef MAYA_PROFILE
         if (f == (getenv("MAYA_PROF0") ? atoi(getenv("MAYA_PROF0")) : 800)) { extern unsigned long g_prof[4096]; memset(g_prof, 0, sizeof g_prof); }
 #endif
+        { extern int g_mustrace; extern long g_frame_no; g_frame_no = f; g_mustrace = getenv("MAYA_MUS") && f >= atoi(getenv("MAYA_MUS")); }
         { extern int g_alistrace; g_alistrace = getenv("MAYA_ALIS") && f >= atoi(getenv("MAYA_ALIS")) && f < atoi(getenv("MAYA_ALIS")) + 3; }
         if (!maya_run_frame()) {
             const char *e = maya_error();

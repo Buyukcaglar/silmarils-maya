@@ -56,7 +56,8 @@ On macOS, `./build.sh [folder]` does the same into `build/mac` (the universal ap
   Example run to the first scene: `--key 1000 0x40 --key 1600 0x3a --joy 2000 8 100`.
 - Build flags (`build/cli/b.sh "-DFLAG"`, a direct clang build): `MAYA_LOG` logs OS calls (files, memory);
   `MAYA_PROFILE` with `MAYA_PROF0=<frame>` lists the hottest regions; `MAYA_ALISTRACE` with `MAYA_ALIS=<frame>`
-  traces ALIS opcodes (the interpreter loop at $4200a, script pointer in A3). `MAYA_TRACE=1` (environment)
+  traces ALIS opcodes (the interpreter loop at $4200a, script pointer in A3). `MAYA_MUSTRACE` logs the sound player's calls, and with `MAYA_MUS=<frame>` each music timer tick from that frame on (stream pointer, duration, command).
+  `MAYA_TRACE=1` (environment)
   prints the CPU and interrupt state every 100 frames.
 - The ALIS opcode and operator names are in the reference interpreter (`_research/alis-ref/src/opcodes.c`,
   `opernames.c`).
@@ -83,7 +84,8 @@ On macOS, `./build.sh [folder]` does the same into `build/mac` (the universal ap
 - **Time and interrupts.** Each instruction adds an estimated 68000 cycle count. At control transfers, the
   generated code checks a "next hardware event" cycle and calls the runtime. The runtime advances the beam
   position, CIA timers and Paula DMA, and delivers interrupts as the CPU does (push PC and SR, enter the vector
-  at $64 + 4·level). Reads of the beam counters (VPOSR/VHPOSR) sync to the cycle count first.
+  at $64 + 4·level). Reads of the beam counters (VPOSR/VHPOSR) sync to the cycle count first. Instructions that touch a CIA or custom chip register
+  check for a due event first, so an interrupt is taken before the access as on the 68000 (D32).
 - **Memory.** 24-bit addresses: 2 MB chip RAM at 0, plus memory for the OS structures the game reads (ExecBase,
   library bases). Custom chip ($dff000) and CIA ($bfd000/$bfe001) accesses go to the hardware model.
 - **OS calls (HLE).** Library bases point into a reserved area. A call such as `jsr -30(a6)` lands at an

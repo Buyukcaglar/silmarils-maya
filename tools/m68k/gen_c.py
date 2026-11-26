@@ -10,7 +10,10 @@ memory.  The code is split into regions (one per entry point: subroutine, table 
 region is one C function whose instructions are labels.  A branch inside the region is a goto; every other transfer
 (calls, returns, indirect jumps, branches to other regions) sets M.pc and returns to the dispatcher, which enters
 the region holding M.pc through the switch at its top.  Backward gotos check M.ev, so hardware events and
-interrupts are taken at loop heads, region exits and returns.
+interrupts are taken at loop heads, region exits and returns.  An instruction that touches the hardware (a CIA or
+custom chip register) checks M.ev first as well: an interrupt that is due is then taken before the access, as on
+the 68000, and not after it (docs/DECISIONS.md D32: the music stop's "andi.b #$f6,$bfde00" lost a race with a due
+CIA-B timer interrupt, whose handler then restarted the timer the game had just stopped).
 """
 import os
 import sys
@@ -21,6 +24,46 @@ from decoder import Decoder, DecodeError, CC_NAMES      # noqa: E402
 from analyze import Analysis                            # noqa: E402
 import hints_maya                                       # noqa: E402
 import patches_maya                                     # noqa: E402
+
+HW_LO = 0xbf0000          # CIAs at $bfd000/$bfe001, custom chips at $dff000
+
+
+def _hw_const(ea):
+    """The hardware address an operand names outright (absolute, or an immediate loaded as an address)."""
+    if ea is None:
+        return False
+    if ea.kind in ('absw', 'absl'):
+        return HW_LO <= (ea.disp & 0xffffff) and (ea.disp & 0xff000000) == 0
+    return False
+
+
+def hw_base_regs(insns):
+    """The address registers a region ever loads with a hardware address (lea $dff000,a0; movea.l #$dff0a0,a6)."""
+    regs = set()
+    for i in insns:
+        if i.dst is None or i.dst.kind != 'an' or i.src is None:
+            continue
+        if i.op == 'lea' and _hw_const(i.src):
+            regs.add(i.dst.reg)
+        elif i.op in ('move', 'movea') and i.src.kind == 'imm' and HW_LO <= (i.src.disp & 0xffffffff) <= 0xffffff:
+            regs.add(i.dst.reg)
+    return regs
+
+
+def touches_hw(i, regs):
+    """1 when the instruction reads or writes a hardware register, or may (through a register the region uses as a
+    hardware base).  Over-approximate on purpose: an extra check costs one compare."""
+    if i.op == 'lea':
+        return False
+    for ea in (i.src, i.dst):
+        if ea is None:
+            continue
+        if _hw_const(ea):
+            return True
+        if regs and ea.kind in ('ind', 'postinc', 'predec', 'disp', 'index') and ea.reg in regs:
+            return True
+    return False
+
 
 MASK = {1: '0xffu', 2: '0xffffu', 4: '0xffffffffu'}
 MASKV = {1: 0xff, 2: 0xffff, 4: 0xffffffff}
@@ -720,11 +763,13 @@ def build(tx_path, outdir):
         f.write('#if defined(__clang__)\n#pragma clang diagnostic ignored "-Wunused-label"\n'
                 '#pragma clang diagnostic ignored "-Wunused-variable"\n#elif defined(_MSC_VER)\n'
                 '#pragma warning(disable: 4102 4189 4146)\n#endif\n\n')
+        hw_checks = 0
         for rg in regions:
             f.write('static void R_%06x(void)\n{\n    switch (M.pc) {\n' % rg.start)
             for i in rg.insns:
                 f.write('    case 0x%xu: goto L_%06x;\n' % (i.addr, i.addr))
             f.write('    default: rt_bad_pc(); return;\n    }\n')
+            hw_regs = hw_base_regs(rg.insns)
             for k, i in enumerate(rg.insns):
                 e = Emit(None, i, rg)
                 try:
@@ -732,6 +777,9 @@ def build(tx_path, outdir):
                 except GenError as ex:
                     raise SystemExit(str(ex))
                 f.write('L_%06x: /* %s */\n    {\n' % (i.addr, str(i).replace('*/', '* /')))
+                if touches_hw(i, hw_regs):
+                    f.write('        if (M.cyc >= M.ev) { M.pc = 0x%xu; return; }\n' % i.addr)
+                    hw_checks += 1
                 f.write('        M.cyc += %d;\n' % cycles(i))
                 if i.addr in hooks:
                     f.write('        %s();\n' % hooks[i.addr])

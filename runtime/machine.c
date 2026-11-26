@@ -273,6 +273,8 @@ static void rt_event(void)
 unsigned long g_prof[4096];
 #endif
 int g_alistrace;
+int g_mustrace;
+long g_frame_no;
 
 static void dispatch(void)
 {
@@ -287,6 +289,22 @@ static void dispatch(void)
             if (pc == 0x4200au && g_alistrace)
                 fprintf(stderr, "  alis a3=%06X op=%02X %02X %02X %02X d7=%08X\n", (unsigned)M.a[3], (unsigned)RB(M.a[3]),
                         (unsigned)RB(M.a[3] + 1), (unsigned)RB(M.a[3] + 2), (unsigned)RB(M.a[3] + 3), (unsigned)M.d[7]);
+#endif
+#ifdef MAYA_MUSTRACE
+            {
+                if (pc == 0x49290u || pc == 0x49390u || pc == 0x49180u || pc == 0x4913cu || pc == 0x491eeu ||
+                    pc == 0x456d4u || pc == 0x456e0u || pc == 0x4905au || pc == 0x4910cu || pc == 0x491a8u ||
+                    pc == 0x491bau || pc == 0x491ceu)
+                    fprintf(stderr, "[%ld] call %06X d0=%08X d1=%08X a0=%06X a1=%06X a2=%06X | ptr=%06X dur=%04X mode=%02X 9450=%04X sr=%04X\n",
+                            g_frame_no, (unsigned)pc, (unsigned)M.d[0], (unsigned)M.d[1], (unsigned)M.a[0],
+                            (unsigned)M.a[1], (unsigned)M.a[2], (unsigned)RL(0x49a42), (unsigned)RW(0x49a4e),
+                            (unsigned)RB(0x49a50), (unsigned)RW(0x49450), (unsigned)GET_SR());
+                if (pc == 0x49590u && g_mustrace)
+                    fprintf(stderr, "[%ld] tick ptr=%06X dur=%04X mode=%02X next=%02X %02X %02X %02X\n", g_frame_no,
+                            (unsigned)RL(0x49a42), (unsigned)RW(0x49a4e), (unsigned)RB(0x49a50),
+                            (unsigned)RB(RL(0x49a42)), (unsigned)RB(RL(0x49a42) + 1), (unsigned)RB(RL(0x49a42) + 2),
+                            (unsigned)RB(RL(0x49a42) + 3));
+            }
 #endif
             tx_regions[k - 1].fn();
             return;

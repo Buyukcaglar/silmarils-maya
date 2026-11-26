@@ -1,5 +1,12 @@
 # Release notes
 
+## Fixed in the source after v1.0.0 (not yet in a release)
+
+- A rare crash, "The game stopped: The game jumped to $DFF0A0, which is not recompiled code" (the address varies),
+  mostly a moment after music stops, for example when leaving the title or a dialog. A timer interrupt could be
+  handled just after the game had stopped the music timer, which restarted it (decision D32 in DECISIONS.md).
+  The v1.0.0 downloads still have this bug.
+
 ## v1.0.0 for macOS (2026-11-26): universal, signed and notarized
 
 The same game as the Windows v1.0.0, now as a native Mac application: one universal app for Apple silicon and Intel
