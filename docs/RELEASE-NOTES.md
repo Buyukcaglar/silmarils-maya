@@ -1,11 +1,16 @@
 # Release notes
 
-## Fixed in the source after v1.0.0 (not yet in a release)
+## v1.0.0 Windows download replaced (2026-11-26)
 
-- A rare crash, "The game stopped: The game jumped to $DFF0A0, which is not recompiled code" (the address varies),
-  mostly a moment after music stops, for example when leaving the title or a dialog. A timer interrupt could be
-  handled just after the game had stopped the music timer, which restarted it (decision D32 in DECISIONS.md).
-  The v1.0.0 downloads still have this bug.
+`maya64-1.0.0-win64.zip` on the v1.0.0 release was replaced with a rebuilt `maya64.exe`. The version number is
+unchanged.
+
+- Fixed: a rare crash, "The game stopped: The game jumped to $DFF0A0, which is not recompiled code" (the address
+  varies), mostly a moment after music stops, for example when leaving the title or a dialog. A timer interrupt
+  could be handled just after the game had stopped the music timer, which restarted it (decision D32 in
+  DECISIONS.md).
+- SHA-256 of the new zip: `9c7a9baf8407b3e69ffd1736e2ee6c41078c6bf33e7d920e41780c1ee493ea20`.
+- The macOS files are still the first build and have this bug until they are rebuilt from the current source.
 
 ## v1.0.0 for macOS (2026-11-26): universal, signed and notarized
 
