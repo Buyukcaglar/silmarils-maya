@@ -9,7 +9,7 @@ start, `maya64.exe` asks for that folder and remembers it.
 
 ### What works
 
-- The whole game from the Silmarils logo and the intro to play: scenes, walking, the F1 to F10 icons.
+- The game from the Silmarils logo and the intro into play: scenes, walking, the F1 to F10 icons.
 - Music and sound effects, from an emulated Paula (stereo, 48 kHz, with the Amiga 500's filters).
 - Saving (F10) and loading (`L` at the start prompt). Saved games go to a `saves` folder next to the program; the
   game's own folder is never changed.
@@ -33,6 +33,8 @@ protection check is skipped.
 
 ### Known limits
 
+- Tested from the start into the first scenes, with saving and loading. It has not been played through to the
+  end yet; please report anything that stops or looks wrong.
 - Windows 10 or 11, 64-bit only. A macOS universal build is in progress.
 - Only the Amiga version's data works. The DOS version's files are not supported.
 - The recompiler was written for the `T.X` of the WHDLoad v1.4 package. Building from another version's `T.X`
