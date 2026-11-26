@@ -1,0 +1,13 @@
+# Original game data is copyrighted: never commit it or anything derived from it
+_references/
+_extracted/
+# Third-party reference clone (has its own git)
+_research/
+# Build outputs, including generated C (it embeds code lifted from T.X)
+build/
+out/
+gen/
+__pycache__/
+*.pyc
+# Rendered game art (derived from copyrighted assets)
+docs/fidelity/*.png

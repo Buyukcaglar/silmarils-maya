@@ -1,0 +1,42 @@
+MIT License
+
+Copyright (c) 2026 Onur BUYUKCAGLAR
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+--------------------------------------------------------------------------------
+
+The licence covers this port's own code (Le Fétiche Maya 64bit: the recompiler,
+the Amiga runtime, the presentation code and the hosts). Le Fétiche Maya
+(Silmarils, 1989), its program and its data belong to their owners. They are
+not part of this repository; the port needs a copy of the original Amiga game.
+
+Acknowledgements
+
+The game's fixes for modern machines (PAL display, the interrupt-driven sound
+timer and two data fixes) follow the WHDLoad installer of the game by Mr.Larmer
+and CFou!; no code of it is included.
+
+The CRT scanlines filter follows the math of the CRT filter of DOSBox Pure
+Unleashed by Bernhard Schelling; it is a reimplementation, and no code of it is
+included.
+
+The ALIS file formats were cross-checked against the open-source ALIS
+interpreter by maestun (https://github.com/maestun/alis, MIT); no code of it is
+included.
